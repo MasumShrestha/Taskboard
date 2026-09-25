@@ -1,0 +1,36 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - combobox [ref=e5]:
+      - option "My first board" [selected]
+    - textbox [ref=e6]: My first board
+    - button "+ Board" [ref=e7] [cursor=pointer]
+    - button "Members & fields" [ref=e8] [cursor=pointer]
+    - button "Delete board" [disabled] [ref=e9]
+  - generic [ref=e10]:
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - textbox [ref=e13]: To Do
+        - generic [ref=e14]: "1"
+        - button "‹" [ref=e15] [cursor=pointer]
+        - button "›" [ref=e16] [cursor=pointer]
+        - button "×" [ref=e17] [cursor=pointer]
+      - button "Test card" [ref=e43]
+      - textbox "+ Add a card" [active] [ref=e20]
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - textbox [ref=e23]: In Progress
+        - generic [ref=e24]: "0"
+        - button "‹" [ref=e25] [cursor=pointer]
+        - button "›" [ref=e26] [cursor=pointer]
+        - button "×" [ref=e27] [cursor=pointer]
+      - textbox "+ Add a card" [ref=e30]
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - textbox [ref=e33]: Done
+        - generic [ref=e34]: "0"
+        - button "‹" [ref=e35] [cursor=pointer]
+        - button "›" [ref=e36] [cursor=pointer]
+        - button "×" [ref=e37] [cursor=pointer]
+      - textbox "+ Add a card" [ref=e40]
+    - button "+ Add column" [ref=e41] [cursor=pointer]
+  - status [ref=e42]
