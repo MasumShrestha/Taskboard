@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import './board.css'
 import './views.css'
-import App from './TaskApp'
+import Root from './Root'
 
-createRoot(document.getElementById('root')!).render(<App />)
+createRoot(document.getElementById('root')!).render(<Root />)
