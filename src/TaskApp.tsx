@@ -9,7 +9,7 @@ import Icon from './Icon'
 import { AskModal, CardModal, HelpModal, type Ask, NewCardModal, SettingsModal } from './Modals'
 import { AnalyticsView, BacklogView, ListView, TimelineView, WorkspacesView } from './Views'
 import {
-  activeSprint, cardKey, diffDays, isDone, plain, progressOf, today, uid, useStore, type Loaded,
+  activeSprint, cardKey, diffDays, isDone, plain, progressOf, today, uid, useStore,
 } from './store'
 import type { Board, Card, Column, State } from './types'
 
@@ -26,10 +26,8 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 ]
 const ratio = (done: number, total: number) => `${done}/${total}`
 
-export default function App({ initial, userId, email, onSignOut }: {
-  initial: Loaded; userId: string; email: string; onSignOut: () => void
-}) {
-  const store = useStore(initial, userId)
+export default function App() {
+  const store = useStore()
   const { state, board, updateBoard } = store
   const [view, setView] = useState<View>('sprints')
   const [tab, setTab] = useState<Tab>('board')
@@ -213,14 +211,9 @@ export default function App({ initial, userId, email, onSignOut }: {
           <button className="nav-item" onClick={() => setHelp('support')}><Icon n="headset_mic" /><span>Support</span></button>
           <div className="profile">
             <span className="avatar big">{me.slice(0, 2).toUpperCase()}</span>
-            <div><b>{me}</b><span title={email}>{email || 'Workspace owner'}</span></div>
-            <button className="icon-btn" title="Change name" onClick={rename}><Icon n="edit" /></button>
-            <button className="icon-btn" title="Sign out" aria-label="Sign out" onClick={onSignOut}><Icon n="logout" /></button>
+            <div><b>{me}</b><span>Workspace owner</span></div>
+            <button className="icon-btn" title="Change name" onClick={rename}><Icon n="unfold_more" /></button>
           </div>
-          <button className={`sync ${store.sync}`} disabled={store.sync !== 'error'} onClick={store.retry}
-            title={store.sync === 'error' ? 'Click to retry' : undefined}>
-            {{ saved: 'All changes saved', saving: 'Saving…', error: 'Save failed — retry' }[store.sync]}
-          </button>
         </div>
       </aside>
 

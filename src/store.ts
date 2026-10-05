@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
-import { supabase } from './supabase'
+import { useEffect, useState } from 'react'
 import type { Board, Card, Sprint, State } from './types'
 
 const KEY = 'taskboard:v1'
@@ -60,29 +59,13 @@ function normalize(s: State): State {
   return { boards, activeId: boards.some((b) => b.id === s.activeId) ? s.activeId : boards[0].id }
 }
 
-function loadLocal(): State | null {
+function load(): State {
   try {
     const raw = localStorage.getItem(KEY)
     if (raw) return normalize(JSON.parse(raw))
   } catch { /* ignore */ }
-  return null
-}
-
-export type Loaded = { state: State; saved: Record<string, string> }
-const ACTIVE = 'taskboard:active'
-
-// Loads the user's boards from Supabase. First login on a browser with old local boards imports them.
-export async function loadRemote(userId: string): Promise<Loaded> {
-  const { data, error } = await supabase.from('boards').select('id, data, updated_at').eq('owner', userId).order('updated_at')
-  if (error) throw error
-  const saved: Record<string, string> = {}
-  let boards = (data ?? []).map((r) => { const b = r.data as Board; saved[b.id] = JSON.stringify(b); return b })
-  if (!boards.length) {
-    boards = (loadLocal() ?? { boards: [newBoard('My first board')] }).boards // unsaved -> uploaded by first sync
-  }
-  let activeId = boards[0].id
-  try { const a = localStorage.getItem(ACTIVE); if (a && boards.some((b) => b.id === a)) activeId = a } catch { /* ignore */ }
-  return { state: normalize({ boards, activeId }), saved }
+  const b = newBoard('My first board')
+  return { boards: [b], activeId: b.id }
 }
 
 // Keeps doneAt in sync with the last column so burndown/velocity have history.
@@ -99,51 +82,11 @@ function stampDone(b: Board): Board {
   return changed ? { ...b, cards } : b
 }
 
-export type SyncStatus = 'saved' | 'saving' | 'error'
-
-export function useStore(initial: Loaded, userId: string) {
-  const [state, setState] = useState<State>(initial.state)
-  const [sync, setSync] = useState<SyncStatus>('saved')
-  const saved = useRef<Record<string, string>>(initial.saved) // board id -> JSON last written to the database
-  const stateRef = useRef(state)
-  stateRef.current = state
-
-  const flush = async () => {
-    const s = stateRef.current
-    const json = Object.fromEntries(s.boards.map((b) => [b.id, JSON.stringify(b)]))
-    const changed = s.boards.filter((b) => saved.current[b.id] !== json[b.id])
-    const removed = Object.keys(saved.current).filter((id) => !json[id])
-    if (!changed.length && !removed.length) return setSync('saved')
-    setSync('saving')
-    try {
-      if (changed.length) {
-        const { error } = await supabase.from('boards').upsert(
-          changed.map((b) => ({ id: b.id, owner: userId, name: b.name, data: b, updated_at: new Date().toISOString() })))
-        if (error) throw error
-        changed.forEach((b) => { saved.current[b.id] = json[b.id] })
-      }
-      if (removed.length) {
-        const { error } = await supabase.from('boards').delete().in('id', removed)
-        if (error) throw error
-        removed.forEach((id) => delete saved.current[id])
-      }
-      setSync('saved')
-    } catch { setSync('error') }
-  }
-
-  // debounce writes; also flush when the tab is hidden so quick edits are not lost
+export function useStore() {
+  const [state, setState] = useState<State>(load)
   useEffect(() => {
-    const t = setTimeout(flush, 700)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    try { localStorage.setItem(KEY, JSON.stringify(state)) } catch { /* ignore */ }
   }, [state])
-  useEffect(() => {
-    const h = () => document.visibilityState === 'hidden' && flush()
-    document.addEventListener('visibilitychange', h)
-    return () => document.removeEventListener('visibilitychange', h)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  useEffect(() => { try { localStorage.setItem(ACTIVE, state.activeId) } catch { /* ignore */ } }, [state.activeId])
 
   const board = state.boards.find((b) => b.id === state.activeId) ?? state.boards[0]
 
@@ -151,7 +94,7 @@ export function useStore(initial: Loaded, userId: string) {
     setState((s) => ({ ...s, boards: s.boards.map((b) => (b.id === board.id ? stampDone(fn(b)) : b)) }))
 
   return {
-    state, board, updateBoard, sync, retry: flush,
+    state, board, updateBoard,
     setActive: (id: string) => setState((s) => ({ ...s, activeId: id })),
     addBoard: (name: string) => {
       const b = newBoard(name)
